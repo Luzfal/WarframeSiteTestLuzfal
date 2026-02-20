@@ -14,6 +14,7 @@ const defaultBuilds = [
     mods: ["Umbral Intensify", "Transient Fortitude", "Adaptation", "Rolling Guard", "Primed Continuity"],
     likes: 21,
     favorite: false,
+    liked: false,
     createdAt: Date.now() - 3600 * 1000 * 48
   },
   {
@@ -28,6 +29,7 @@ const defaultBuilds = [
     mods: ["Serration", "Split Chamber", "Vital Sense", "Hunter Munitions", "Malignant Force"],
     likes: 16,
     favorite: false,
+    liked: false,
     createdAt: Date.now() - 3600 * 1000 * 24
   },
   {
@@ -41,6 +43,7 @@ const defaultBuilds = [
     mods: ["Link Health", "Pack Leader", "Medi-Pet Kit", "Viral Quills"],
     likes: 9,
     favorite: true,
+    liked: false,
     createdAt: Date.now() - 3600 * 1000 * 12
   }
 ];
@@ -155,8 +158,8 @@ function applyAdminMode() {
   renderBuilds();
 }
 
-function updateBuildById(buildId, updater) {
-  if (!isAdmin()) {
+function updateBuildById(buildId, updater, requireAdmin = true) {
+  if (requireAdmin && !isAdmin()) {
     return;
   }
 
@@ -211,16 +214,21 @@ function createBuildCard(build) {
 
   const tagsHtml = build.tags.map((tag) => `<span class="tag-chip">#${tag}</span>`).join("");
 
-  const adminActions = isAdmin()
-    ? `
-      <button type="button" data-action="like" data-id="${build.id}">👍 ${build.likes}</button>
+  const commonActions = `
+      <button type="button" data-action="like" data-id="${build.id}" class="${build.liked ? "is-on" : ""}">
+        👍 ${build.likes}
+      </button>
       <button type="button" data-action="favorite" data-id="${build.id}" class="${build.favorite ? "is-on" : ""}">
         ${build.favorite ? "★ Favori" : "☆ Favori"}
       </button>
+  `;
+
+  const adminActions = isAdmin()
+    ? `${commonActions}
       <button type="button" data-action="edit" data-id="${build.id}">Modifier</button>
       <button type="button" data-action="delete" data-id="${build.id}">Supprimer</button>
     `
-    : `<span class="readonly-badge">Lecture seule</span>`;
+    : `${commonActions}<span class="readonly-badge">Lecture seule</span>`;
 
   card.innerHTML = `
     <h3>${build.name}</h3>
@@ -294,17 +302,25 @@ list.addEventListener("click", (event) => {
     const action = button.dataset.action;
     const buildId = button.dataset.id;
 
-    if (!action || !buildId || !isAdmin()) {
+    if (!action || !buildId) {
       return;
     }
 
     if (action === "like") {
-      updateBuildById(buildId, (build) => ({ ...build, likes: build.likes + 1 }));
+      updateBuildById(buildId, (build) => {
+        const liked = !build.liked;
+        const nextLikes = Math.max(0, (build.likes || 0) + (liked ? 1 : -1));
+        return { ...build, liked, likes: nextLikes };
+      }, false);
       return;
     }
 
     if (action === "favorite") {
-      updateBuildById(buildId, (build) => ({ ...build, favorite: !build.favorite }));
+      updateBuildById(buildId, (build) => ({ ...build, favorite: !build.favorite }), false);
+      return;
+    }
+
+    if (!isAdmin()) {
       return;
     }
 
@@ -409,6 +425,7 @@ form.addEventListener("submit", (event) => {
       mods: [],
       likes: 0,
       favorite: false,
+      liked: false,
       createdAt: Date.now()
     };
     saveBuilds([build, ...builds]);

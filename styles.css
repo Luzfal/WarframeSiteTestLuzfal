@@ -265,15 +265,31 @@ body {
 
 .mods-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  grid-template-areas:
+    ". aura exilus ."
+    "slot1 slot2 slot3 slot4"
+    "slot5 slot6 slot7 slot8";
   gap: 0.7rem;
+}
+
+@media (max-width: 940px) {
+  .mods-grid {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    grid-template-areas:
+      "aura exilus"
+      "slot1 slot2"
+      "slot3 slot4"
+      "slot5 slot6"
+      "slot7 slot8";
+  }
 }
 
 .mod-slot {
   border: 1px dashed #4f5d97;
   border-radius: 12px;
   padding: 0.7rem;
-  min-height: 84px;
+  min-height: 110px;
   background: #131a36;
 }
 
@@ -282,6 +298,22 @@ body {
   border-color: var(--accent);
   background: #162040;
 }
+
+.mod-slot.is-dragover {
+  border-color: #9cf2ff;
+  box-shadow: 0 0 0 2px #2a8aa0 inset;
+}
+
+.slot-aura { grid-area: aura; }
+.slot-exilus { grid-area: exilus; }
+.slot-1 { grid-area: slot1; }
+.slot-2 { grid-area: slot2; }
+.slot-3 { grid-area: slot3; }
+.slot-4 { grid-area: slot4; }
+.slot-5 { grid-area: slot5; }
+.slot-6 { grid-area: slot6; }
+.slot-7 { grid-area: slot7; }
+.slot-8 { grid-area: slot8; }
 
 .slot-title {
   margin: 0 0 0.45rem;
@@ -292,9 +324,45 @@ body {
 }
 
 .slot-mod {
-  margin: 0;
+  margin: 0 0 0.5rem;
   color: var(--text);
   font-weight: 600;
+}
+
+.slot-clear {
+  border: 1px solid #47548f;
+  background: #0f1735;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+}
+
+.mod-pool {
+  margin: 1rem 0;
+}
+
+.mod-pool h3 {
+  margin: 0 0 0.6rem;
+}
+
+.mod-pool-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pool-mod {
+  border: 1px solid #3f4f89;
+  background: #111936;
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  cursor: grab;
+}
+
+.pool-mod:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .form {

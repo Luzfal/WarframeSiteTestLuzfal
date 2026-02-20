@@ -2,17 +2,47 @@ const ADMIN_PASSWORD = "warframe-admin";
 const ADMIN_SESSION_KEY = "warframe-admin-session";
 const BUILDS_KEY = "warframe-builds";
 
+const SLOT_DEFS = [
+  { key: "aura", label: "Aura", className: "slot-aura" },
+  { key: "exilus", label: "Exilus", className: "slot-exilus" },
+  { key: "slot1", label: "Slot 1", className: "slot-1" },
+  { key: "slot2", label: "Slot 2", className: "slot-2" },
+  { key: "slot3", label: "Slot 3", className: "slot-3" },
+  { key: "slot4", label: "Slot 4", className: "slot-4" },
+  { key: "slot5", label: "Slot 5", className: "slot-5" },
+  { key: "slot6", label: "Slot 6", className: "slot-6" },
+  { key: "slot7", label: "Slot 7", className: "slot-7" },
+  { key: "slot8", label: "Slot 8", className: "slot-8" }
+];
+
+const DEFAULT_MOD_LIBRARY = [
+  "Serration",
+  "Split Chamber",
+  "Vital Sense",
+  "Hunter Munitions",
+  "Galvanized Chamber",
+  "Primed Continuity",
+  "Umbral Intensify",
+  "Adaptation",
+  "Rolling Guard",
+  "Blind Rage",
+  "Transient Fortitude",
+  "Power Drift"
+];
+
 const detailContainer = document.getElementById("build-detail");
+const modPool = document.getElementById("mod-pool");
 const adminStatus = document.getElementById("detail-admin-status");
 const adminPasswordInput = document.getElementById("detail-admin-password");
 const adminLoginButton = document.getElementById("detail-admin-login");
 const adminLogoutButton = document.getElementById("detail-admin-logout");
 const readonlyMessage = document.getElementById("detail-readonly-message");
-const buildForm = document.getElementById("detail-build-form");
-const modsInput = document.getElementById("detail-mods");
+const saveButton = document.getElementById("detail-save");
 const deleteButton = document.getElementById("detail-delete");
 
 let currentBuildId = null;
+let currentMods = SLOT_DEFS.map(() => "");
+let currentBuild = null;
 
 function isAdmin() {
   return localStorage.getItem(ADMIN_SESSION_KEY) === "true";
@@ -41,32 +71,49 @@ function renderNotFound() {
     <h2>Build introuvable</h2>
     <p>Le build demandé n'existe pas ou a été supprimé.</p>
   `;
-
-  buildForm.style.display = "none";
+  modPool.style.display = "none";
+  saveButton.style.display = "none";
+  deleteButton.style.display = "none";
   readonlyMessage.style.display = "none";
 }
 
-function buildModSlots(mods) {
-  const slotNames = ["Aura", "Exilus", "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6", "Slot 7", "Slot 8"];
+function buildLibrary(build) {
+  return [...new Set([...(build.mods || []), ...DEFAULT_MOD_LIBRARY].filter(Boolean))];
+}
 
-  return slotNames
-    .map((slotName, index) => {
-      const mod = mods[index];
-      const occupied = Boolean(mod);
-      return `
-        <article class="mod-slot ${occupied ? "is-filled" : ""}">
-          <p class="slot-title">${slotName}</p>
-          <p class="slot-mod">${occupied ? escapeHtml(mod) : "Emplacement vide"}</p>
-        </article>
-      `;
-    })
-    .join("");
+function renderModPool(build) {
+  const mods = buildLibrary(build);
+  modPool.innerHTML = `
+    <h3>Bibliothèque de mods (glisser-déposer)</h3>
+    <div class="mod-pool-grid">
+      ${mods
+        .map(
+          (mod) => `<button type="button" class="pool-mod" draggable="true" data-mod="${escapeHtml(mod)}">${escapeHtml(mod)}</button>`
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function buildModSlots(mods) {
+  return SLOT_DEFS.map((slot, index) => {
+    const mod = mods[index] || "";
+    const occupied = Boolean(mod);
+    return `
+      <article class="mod-slot ${slot.className} ${occupied ? "is-filled" : ""}" data-slot-index="${index}">
+        <p class="slot-title">${slot.label}</p>
+        <p class="slot-mod">${occupied ? escapeHtml(mod) : "Emplacement vide"}</p>
+        ${occupied ? '<button type="button" class="slot-clear" data-action="clear-slot">Retirer</button>' : ""}
+      </article>
+    `;
+  }).join("");
 }
 
 function renderBuild(build) {
+  currentBuild = build;
+  currentMods = SLOT_DEFS.map((_, index) => build.mods?.[index] || "");
+
   const tagsHtml = (build.tags || []).map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("");
-  const mods = build.mods || [];
-  const modSlotsHtml = buildModSlots(mods);
 
   detailContainer.innerHTML = `
     <h2>${escapeHtml(build.name)}</h2>
@@ -81,11 +128,13 @@ function renderBuild(build) {
     <h3>Tags</h3>
     <div class="tags">${tagsHtml || '<span class="tag-chip">#sans-tag</span>'}</div>
 
-    <h3>Installation des mods (slots)</h3>
-    <div class="mods-grid">${modSlotsHtml}</div>
+    <h3>Installation des mods (layout type Warframe)</h3>
+    <div id="mods-grid" class="mods-grid">${buildModSlots(currentMods)}</div>
   `;
 
-  modsInput.value = mods.join("\n");
+  renderModPool(build);
+  wireDragAndDrop();
+  applyAdminMode();
 }
 
 function applyAdminMode() {
@@ -93,8 +142,73 @@ function applyAdminMode() {
   adminStatus.textContent = admin ? "Mode administrateur activé" : "Mode lecture seule (utilisateur)";
   readonlyMessage.style.display = admin ? "none" : "block";
 
-  for (const field of buildForm.querySelectorAll("textarea, button")) {
-    field.disabled = !admin;
+  for (const el of document.querySelectorAll(".pool-mod, .slot-clear")) {
+    el.toggleAttribute("draggable", admin && el.classList.contains("pool-mod"));
+    if (el instanceof HTMLButtonElement) {
+      el.disabled = !admin;
+    }
+  }
+
+  saveButton.disabled = !admin;
+  deleteButton.disabled = !admin;
+}
+
+function wireDragAndDrop() {
+  for (const modButton of document.querySelectorAll(".pool-mod")) {
+    modButton.addEventListener("dragstart", (event) => {
+      if (!isAdmin()) {
+        event.preventDefault();
+        return;
+      }
+      event.dataTransfer?.setData("text/plain", modButton.dataset.mod || "");
+    });
+  }
+
+  for (const slot of document.querySelectorAll(".mod-slot")) {
+    slot.addEventListener("dragover", (event) => {
+      if (!isAdmin()) return;
+      event.preventDefault();
+      slot.classList.add("is-dragover");
+    });
+
+    slot.addEventListener("dragleave", () => {
+      slot.classList.remove("is-dragover");
+    });
+
+    slot.addEventListener("drop", (event) => {
+      if (!isAdmin()) {
+        return;
+      }
+
+      event.preventDefault();
+      slot.classList.remove("is-dragover");
+      const mod = event.dataTransfer?.getData("text/plain") || "";
+      const index = Number(slot.dataset.slotIndex);
+
+      if (!mod || Number.isNaN(index)) {
+        return;
+      }
+
+      currentMods[index] = mod;
+      renderBuild({ ...currentBuild, mods: currentMods });
+    });
+  }
+
+  for (const clearButton of document.querySelectorAll("button[data-action='clear-slot']")) {
+    clearButton.addEventListener("click", () => {
+      if (!isAdmin()) {
+        return;
+      }
+
+      const slot = clearButton.closest(".mod-slot");
+      const index = Number(slot?.dataset.slotIndex);
+      if (Number.isNaN(index)) {
+        return;
+      }
+
+      currentMods[index] = "";
+      renderBuild({ ...currentBuild, mods: currentMods });
+    });
   }
 }
 
@@ -119,7 +233,6 @@ function refreshPageBuild() {
   }
 
   renderBuild(build);
-  applyAdminMode();
 }
 
 adminLoginButton.addEventListener("click", () => {
@@ -138,24 +251,18 @@ adminLogoutButton.addEventListener("click", () => {
   applyAdminMode();
 });
 
-buildForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-
+saveButton.addEventListener("click", () => {
   if (!isAdmin() || !currentBuildId) {
     return;
   }
 
-  const mods = modsInput.value
-    .split("\n")
-    .map((mod) => mod.trim())
-    .filter(Boolean);
-
+  const cleanedMods = currentMods.map((mod) => mod.trim()).filter(Boolean);
   const nextBuilds = loadBuilds().map((build) => {
     if (build.id !== currentBuildId) {
       return build;
     }
 
-    return { ...build, mods };
+    return { ...build, mods: cleanedMods };
   });
 
   saveBuilds(nextBuilds);

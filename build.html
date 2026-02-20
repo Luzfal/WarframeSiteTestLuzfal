@@ -32,22 +32,15 @@
         </div>
 
         <p id="detail-readonly-message" class="readonly-message">
-          Connectez-vous en admin pour modifier les mods ou supprimer ce build.
+          Connectez-vous en admin pour glisser-déposer les mods et supprimer ce build.
         </p>
 
-        <form id="detail-build-form" class="form">
-          <label>
-            Mods à installer (1 mod par ligne)
-            <textarea id="detail-mods" rows="8" required placeholder="Ex:
-Serration
-Split Chamber
-Vital Sense"></textarea>
-          </label>
-          <div class="admin-actions">
-            <button id="detail-save" type="submit">Enregistrer les mods</button>
-            <button id="detail-delete" type="button" class="danger">Supprimer le build</button>
-          </div>
-        </form>
+        <section id="mod-pool" class="mod-pool" aria-label="Bibliothèque de mods"></section>
+
+        <div class="admin-actions">
+          <button id="detail-save" type="button">Enregistrer la disposition</button>
+          <button id="detail-delete" type="button" class="danger">Supprimer le build</button>
+        </div>
       </section>
     </main>
 

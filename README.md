@@ -13,7 +13,7 @@ Puis ouvrir <http://localhost:4173>.
 ## Pages
 
 - `index.html` : liste des builds, filtres et publication (sans édition des mods).
-- `build.html?id=<id>` : détail d'un build, édition des mods et suppression (admin).
+- `build.html?id=<id>` : détail d'un build avec slots façon jeu + installation par glisser-déposer des mods (admin) et suppression.
 
 ## Rôles
 
