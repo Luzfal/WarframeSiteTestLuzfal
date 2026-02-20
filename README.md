@@ -13,7 +13,7 @@ Puis ouvrir <http://localhost:4173>.
 ## Pages
 
 - `index.html` : liste des builds, filtres et publication (sans édition des mods).
-- `build.html?id=<id>` : détail d'un build avec slots façon jeu, image des mods (wiki + fallback local), glisser-déposer admin et suppression.
+- `build.html?id=<id>` : détail d'un build avec slots façon jeu, image des mods (wiki Warframe prioritaire + fallback local), glisser-déposer admin et suppression.
 
 ## Rôles
 

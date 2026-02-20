@@ -124,17 +124,71 @@ function imageForMod(modName) {
 }
 
 
-async function fetchThumbnailForTitle(title) {
-  const url = `${WIKI_API}?origin=*&action=query&format=json&prop=pageimages&piprop=thumbnail&pithumbsize=220&titles=${encodeURIComponent(title)}`;
-  const response = await fetch(url);
-  if (!response.ok) {
+async function fetchImageForFileTitle(fileTitle) {
+  try {
+    const url = `${WIKI_API}?origin=*&action=query&format=json&prop=imageinfo&iiprop=url&titles=${encodeURIComponent(fileTitle)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await response.json();
+    const pages = payload?.query?.pages || {};
+    const page = Object.values(pages)[0];
+    return page?.imageinfo?.[0]?.url || null;
+  } catch {
     return null;
   }
+}
 
-  const payload = await response.json();
-  const pages = payload?.query?.pages || {};
-  const page = Object.values(pages)[0];
-  return page?.thumbnail?.source || null;
+function scoreFileTitle(fileTitle, modName) {
+  const title = fileTitle.toLowerCase();
+  const normalized = modName.toLowerCase().replaceAll(" ", "_");
+  let score = 0;
+
+  if (title.includes(normalized)) score += 50;
+  if (title.includes("mod")) score += 20;
+  if (title.includes("card")) score += 15;
+  if (title.endsWith(".png")) score += 10;
+  if (title.includes("prime") && modName.toLowerCase().includes("prime")) score += 8;
+
+  return score;
+}
+
+async function fetchCandidateFilesFromModPage(modName) {
+  try {
+    const pageTitle = modName.trim().replaceAll(" ", "_");
+    const url = `${WIKI_API}?origin=*&action=query&format=json&prop=images&imlimit=100&titles=${encodeURIComponent(pageTitle)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = await response.json();
+    const pages = payload?.query?.pages || {};
+    const page = Object.values(pages)[0];
+    const images = page?.images || [];
+    return images.map((item) => item.title).filter((title) => title?.startsWith("File:"));
+  } catch {
+    return [];
+  }
+}
+
+async function fetchCandidateFilesFromSearch(modName) {
+  try {
+    const search = `${modName} mod card`;
+    const url = `${WIKI_API}?origin=*&action=query&format=json&list=search&srsearch=${encodeURIComponent(search)}&srnamespace=6&srlimit=10`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = await response.json();
+    const results = payload?.query?.search || [];
+    return results.map((item) => item.title).filter((title) => title?.startsWith("File:"));
+  } catch {
+    return [];
+  }
 }
 
 async function fetchWikiModImage(modName) {
@@ -143,15 +197,23 @@ async function fetchWikiModImage(modName) {
   }
 
   const normalized = modName.trim().replaceAll(" ", "_");
-  const candidates = [
-    normalized,
-    `${normalized}_(Mod)`,
+  const directCandidates = [
     `File:${normalized}.png`,
-    `File:${normalized}_Mod.png`
+    `File:${normalized}_(Mod).png`,
+    `File:${normalized}_Mod.png`,
+    `File:${normalized}_Mod_Card.png`
   ];
 
-  for (const title of candidates) {
-    const source = await fetchThumbnailForTitle(title);
+  const discovered = [
+    ...(await fetchCandidateFilesFromModPage(modName)),
+    ...(await fetchCandidateFilesFromSearch(modName))
+  ];
+
+  const candidates = [...new Set([...directCandidates, ...discovered])]
+    .sort((a, b) => scoreFileTitle(b, modName) - scoreFileTitle(a, modName));
+
+  for (const fileTitle of candidates) {
+    const source = await fetchImageForFileTitle(fileTitle);
     if (!source) {
       continue;
     }
