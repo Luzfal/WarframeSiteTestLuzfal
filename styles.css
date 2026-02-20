@@ -28,6 +28,10 @@ body {
   padding: 4rem 0 2rem;
 }
 
+.hero-compact {
+  padding-bottom: 1rem;
+}
+
 .hero h1 {
   margin: 0;
   font-size: clamp(2rem, 4vw, 3rem);
@@ -37,6 +41,14 @@ body {
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.8rem;
+  color: var(--accent);
+  text-decoration: none;
   font-weight: 600;
 }
 
@@ -152,21 +164,43 @@ body {
 .card-actions {
   display: flex;
   gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
-.card-actions button {
+.card-actions button,
+.details-link {
   padding: 0.45rem 0.7rem;
   border-radius: 10px;
   border: 1px solid #33407a;
   background: #10152d;
   color: var(--text);
   font-weight: 600;
+  text-decoration: none;
 }
 
 .card-actions button.is-on {
   border-color: transparent;
   background: var(--accent);
   color: #031421;
+}
+
+.details-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.detail-layout {
+  margin-bottom: 3rem;
+}
+
+.mods-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+}
+
+.mods-list li {
+  margin-bottom: 0.4rem;
 }
 
 .form {

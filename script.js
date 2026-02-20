@@ -8,6 +8,13 @@ const defaultBuilds = [
     description:
       "Spore + Miasma orienté survie Steel Path avec adaptation et rolling guard.",
     tags: ["survie", "steelpath", "solo"],
+    mods: [
+      "Umbral Intensify",
+      "Transient Fortitude",
+      "Adaptation",
+      "Rolling Guard",
+      "Primed Continuity"
+    ],
     likes: 21,
     favorite: false,
     createdAt: Date.now() - 3600 * 1000 * 48
@@ -21,6 +28,13 @@ const defaultBuilds = [
     description:
       "Hunter Munitions, Vital Sense et faction mod pour burst les eximus.",
     tags: ["crit", "viral", "burst"],
+    mods: [
+      "Serration",
+      "Split Chamber",
+      "Vital Sense",
+      "Hunter Munitions",
+      "Malignant Force"
+    ],
     likes: 16,
     favorite: false,
     createdAt: Date.now() - 3600 * 1000 * 24
@@ -33,6 +47,7 @@ const defaultBuilds = [
     content: "Farm rapide",
     description: "Viral spread permanent, sacrifiable en contenu endurance.",
     tags: ["support", "viral", "endurance"],
+    mods: ["Link Health", "Pack Leader", "Medi-Pet Kit", "Viral Quills"],
     likes: 9,
     favorite: true,
     createdAt: Date.now() - 3600 * 1000 * 12
@@ -92,7 +107,14 @@ function visibleBuilds() {
       return true;
     }
 
-    const haystack = [build.name, build.author, build.description, build.content, build.tags.join(" ")]
+    const haystack = [
+      build.name,
+      build.author,
+      build.description,
+      build.content,
+      build.tags.join(" "),
+      (build.mods || []).join(" ")
+    ]
       .join(" ")
       .toLowerCase();
 
@@ -136,6 +158,7 @@ function createBuildCard(build) {
       <button data-action="favorite" data-id="${build.id}" class="${build.favorite ? "is-on" : ""}">
         ${build.favorite ? "★ Favori" : "☆ Favori"}
       </button>
+      <a class="details-link" href="build.html?id=${encodeURIComponent(build.id)}">Voir les mods</a>
     </div>
   `;
 
@@ -212,6 +235,12 @@ form.addEventListener("submit", (event) => {
     .map((tag) => normalize(tag))
     .filter(Boolean);
 
+  const mods = document
+    .getElementById("mods")
+    .value.split("\n")
+    .map((mod) => mod.trim())
+    .filter(Boolean);
+
   const build = {
     id: crypto.randomUUID(),
     name: document.getElementById("name").value.trim(),
@@ -220,6 +249,7 @@ form.addEventListener("submit", (event) => {
     content: document.getElementById("content").value,
     description: document.getElementById("description").value.trim(),
     tags,
+    mods,
     likes: 0,
     favorite: false,
     createdAt: Date.now()
