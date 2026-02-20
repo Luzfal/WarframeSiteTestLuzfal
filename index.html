@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Warframe Build Hub</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="container">
+        <p class="tag">Communauté Warframe</p>
+        <h1>Partage tes meilleurs builds Warframe</h1>
+        <p>
+          Publie des configurations pour frames, armes et compagnons. Découvre ce
+          qui fonctionne en Steel Path, Archonte, Eidolon ou farm rapide.
+        </p>
+      </div>
+    </header>
+
+    <main class="container grid">
+      <section>
+        <h2>Builds populaires</h2>
+        <div class="tabs" role="tablist" aria-label="Filtrer les builds par catégorie">
+          <button class="tab is-active" role="tab" data-category="Tous" aria-selected="true">Tous</button>
+          <button class="tab" role="tab" data-category="Warframe" aria-selected="false">Warframes</button>
+          <button class="tab" role="tab" data-category="Arme" aria-selected="false">Armes</button>
+          <button class="tab" role="tab" data-category="Compagnon" aria-selected="false">Compagnons</button>
+        </div>
+
+        <div class="toolbar">
+          <label>
+            Rechercher
+            <input id="search" placeholder="Nom, auteur, tags..." />
+          </label>
+          <label>
+            Trier par
+            <select id="sort">
+              <option value="recent">Plus récents</option>
+              <option value="likes">Plus likés</option>
+              <option value="name">Nom A → Z</option>
+            </select>
+          </label>
+          <label class="checkbox-label">
+            <input id="favorites-only" type="checkbox" />
+            Favoris uniquement
+          </label>
+        </div>
+
+        <div id="build-list" class="cards"></div>
+      </section>
+
+      <section>
+        <h2>Ajouter un build</h2>
+        <form id="build-form" class="form">
+          <label>
+            Nom du build
+            <input id="name" required placeholder="Ex: Mesa Prime - Crit Régulateurs" />
+          </label>
+          <label>
+            Auteur
+            <input id="author" required placeholder="Ex: TennoLuz" />
+          </label>
+          <label>
+            Type
+            <select id="type" required>
+              <option value="">Choisir...</option>
+              <option>Warframe</option>
+              <option>Arme</option>
+              <option>Compagnon</option>
+            </select>
+          </label>
+          <label>
+            Contenu ciblé
+            <select id="content" required>
+              <option value="">Choisir...</option>
+              <option>Steel Path</option>
+              <option>Archonte</option>
+              <option>Eidolon</option>
+              <option>Farm rapide</option>
+            </select>
+          </label>
+          <label>
+            Tags (séparés par des virgules)
+            <input id="tags" placeholder="Ex: crit, viral, budget, solo" />
+          </label>
+          <label>
+            Description
+            <textarea id="description" rows="4" required placeholder="Objectif, mods clés, arcanes..."></textarea>
+          </label>
+          <button type="submit">Publier</button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="container footer">
+      <p>Warframe Build Hub • Projet communautaire non officiel</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
