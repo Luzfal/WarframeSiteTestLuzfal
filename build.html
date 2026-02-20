@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Détail du build • Warframe Build Hub</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero hero-compact">
+      <div class="container">
+        <a class="back-link" href="index.html">← Retour aux builds</a>
+        <h1>Détail du build</h1>
+      </div>
+    </header>
+
+    <main class="container detail-layout">
+      <section id="build-detail" class="card"></section>
+
+      <section class="card">
+        <h2>Administration du build</h2>
+        <div class="admin-panel">
+          <p id="detail-admin-status" class="status-text">Mode lecture seule (utilisateur)</p>
+          <label>
+            Mot de passe admin
+            <input id="detail-admin-password" type="password" placeholder="Entrer le mot de passe admin" />
+          </label>
+          <div class="admin-actions">
+            <button id="detail-admin-login" type="button">Se connecter</button>
+            <button id="detail-admin-logout" type="button">Se déconnecter</button>
+          </div>
+        </div>
+
+        <p id="detail-readonly-message" class="readonly-message">
+          Connectez-vous en admin pour glisser-déposer les mods et supprimer ce build.
+        </p>
+
+        <section id="mod-pool" class="mod-pool" aria-label="Bibliothèque de mods"></section>
+
+        <div class="admin-actions">
+          <button id="detail-save" type="button">Enregistrer la disposition</button>
+          <button id="detail-delete" type="button" class="danger">Supprimer le build</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="container footer">
+      <p>Warframe Build Hub • Projet communautaire non officiel</p>
+    </footer>
+
+    <script src="build.js"></script>
+  </body>
+</html>
