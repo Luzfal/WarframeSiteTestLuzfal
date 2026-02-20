@@ -123,14 +123,9 @@ function imageForMod(modName) {
   return imageCache[modName] || placeholderImageUrl(modName);
 }
 
-async function fetchWikiModImage(modName) {
-  if (imageCache[modName]) {
-    return imageCache[modName];
-  }
 
-  const title = modName.replaceAll(" ", "_");
-  const url = `${WIKI_API}?origin=*&action=query&format=json&prop=pageimages&piprop=thumbnail&pithumbsize=180&titles=${encodeURIComponent(title)}`;
-
+async function fetchThumbnailForTitle(title) {
+  const url = `${WIKI_API}?origin=*&action=query&format=json&prop=pageimages&piprop=thumbnail&pithumbsize=220&titles=${encodeURIComponent(title)}`;
   const response = await fetch(url);
   if (!response.ok) {
     return null;
@@ -139,15 +134,34 @@ async function fetchWikiModImage(modName) {
   const payload = await response.json();
   const pages = payload?.query?.pages || {};
   const page = Object.values(pages)[0];
-  const source = page?.thumbnail?.source;
+  return page?.thumbnail?.source || null;
+}
 
-  if (!source) {
-    return null;
+async function fetchWikiModImage(modName) {
+  if (imageCache[modName]) {
+    return imageCache[modName];
   }
 
-  imageCache[modName] = source;
-  saveImageCache();
-  return source;
+  const normalized = modName.trim().replaceAll(" ", "_");
+  const candidates = [
+    normalized,
+    `${normalized}_(Mod)`,
+    `File:${normalized}.png`,
+    `File:${normalized}_Mod.png`
+  ];
+
+  for (const title of candidates) {
+    const source = await fetchThumbnailForTitle(title);
+    if (!source) {
+      continue;
+    }
+
+    imageCache[modName] = source;
+    saveImageCache();
+    return source;
+  }
+
+  return null;
 }
 
 async function hydrateModImages(modNames) {
@@ -192,12 +206,12 @@ function renderModPool(build) {
   const mods = buildLibrary(build);
   modPool.innerHTML = `
     <h3>Bibliothèque de mods (glisser-déposer)</h3>
-    <p class="hint">Tu peux poser le même mod plusieurs fois sur différents slots.</p>
+    <p class="hint">Un mod ne peut être équipé qu'une seule fois (comme en jeu).</p>
     <div class="mod-pool-grid">
       ${mods
         .map(
           (mod) => `
-            <button type="button" class="pool-mod" draggable="true" data-mod="${escapeHtml(mod)}" title="${escapeHtml(mod)}">
+            <button type="button" class="pool-mod ${currentMods.includes(mod) ? "is-used" : ""}" draggable="true" data-mod="${escapeHtml(mod)}" title="${escapeHtml(mod)}">
               ${modImageTag(mod)}
               <span class="pool-mod-name">${escapeHtml(mod)}</span>
             </button>`
@@ -311,6 +325,7 @@ function wireDragAndDrop() {
         return;
       }
 
+      currentMods = currentMods.map((slotMod, slotIndex) => (slotMod === mod && slotIndex !== index ? "" : slotMod));
       currentMods[index] = mod;
       renderBuild({ ...currentBuild, mods: currentMods });
     });
