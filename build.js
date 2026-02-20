@@ -1,6 +1,8 @@
 const ADMIN_PASSWORD = "warframe-admin";
 const ADMIN_SESSION_KEY = "warframe-admin-session";
 const BUILDS_KEY = "warframe-builds";
+const MOD_IMAGE_CACHE_KEY = "warframe-mod-image-cache";
+const WIKI_API = "https://wiki.warframe.com/w/api.php";
 
 const SLOT_DEFS = [
   { key: "aura", label: "Aura", className: "slot-aura" },
@@ -43,6 +45,7 @@ const deleteButton = document.getElementById("detail-delete");
 let currentBuildId = null;
 let currentMods = SLOT_DEFS.map(() => "");
 let currentBuild = null;
+let imageCache = loadImageCache();
 
 function isAdmin() {
   return localStorage.getItem(ADMIN_SESSION_KEY) === "true";
@@ -55,6 +58,15 @@ function loadBuilds() {
 
 function saveBuilds(builds) {
   localStorage.setItem(BUILDS_KEY, JSON.stringify(builds));
+}
+
+function loadImageCache() {
+  const stored = localStorage.getItem(MOD_IMAGE_CACHE_KEY);
+  return stored ? JSON.parse(stored) : {};
+}
+
+function saveImageCache() {
+  localStorage.setItem(MOD_IMAGE_CACHE_KEY, JSON.stringify(imageCache));
 }
 
 function escapeHtml(value) {
@@ -80,7 +92,7 @@ function hashColor(name) {
   };
 }
 
-function modImageUrl(name) {
+function placeholderImageUrl(name) {
   const clean = name.trim();
   const short = clean
     .split(" ")
@@ -107,6 +119,56 @@ function modImageUrl(name) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+function imageForMod(modName) {
+  return imageCache[modName] || placeholderImageUrl(modName);
+}
+
+async function fetchWikiModImage(modName) {
+  if (imageCache[modName]) {
+    return imageCache[modName];
+  }
+
+  const title = modName.replaceAll(" ", "_");
+  const url = `${WIKI_API}?origin=*&action=query&format=json&prop=pageimages&piprop=thumbnail&pithumbsize=180&titles=${encodeURIComponent(title)}`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = await response.json();
+  const pages = payload?.query?.pages || {};
+  const page = Object.values(pages)[0];
+  const source = page?.thumbnail?.source;
+
+  if (!source) {
+    return null;
+  }
+
+  imageCache[modName] = source;
+  saveImageCache();
+  return source;
+}
+
+async function hydrateModImages(modNames) {
+  const uniqueMods = [...new Set(modNames.filter(Boolean))];
+
+  for (const modName of uniqueMods) {
+    if (imageCache[modName]) {
+      continue;
+    }
+
+    const remote = await fetchWikiModImage(modName);
+    if (!remote) {
+      continue;
+    }
+
+    for (const img of document.querySelectorAll(`img[data-mod-name="${CSS.escape(modName)}"]`)) {
+      img.src = remote;
+    }
+  }
+}
+
 function renderNotFound() {
   detailContainer.innerHTML = `
     <h2>Build introuvable</h2>
@@ -122,16 +184,21 @@ function buildLibrary(build) {
   return [...new Set([...(build.mods || []), ...DEFAULT_MOD_LIBRARY].filter(Boolean))];
 }
 
+function modImageTag(mod) {
+  return `<img class="mod-art" data-mod-name="${escapeHtml(mod)}" src="${imageForMod(mod)}" alt="Image du mod ${escapeHtml(mod)}" />`;
+}
+
 function renderModPool(build) {
   const mods = buildLibrary(build);
   modPool.innerHTML = `
     <h3>Bibliothèque de mods (glisser-déposer)</h3>
+    <p class="hint">Tu peux poser le même mod plusieurs fois sur différents slots.</p>
     <div class="mod-pool-grid">
       ${mods
         .map(
           (mod) => `
             <button type="button" class="pool-mod" draggable="true" data-mod="${escapeHtml(mod)}" title="${escapeHtml(mod)}">
-              <img class="mod-art" src="${modImageUrl(mod)}" alt="Image du mod ${escapeHtml(mod)}" />
+              ${modImageTag(mod)}
               <span class="pool-mod-name">${escapeHtml(mod)}</span>
             </button>`
         )
@@ -147,7 +214,7 @@ function buildModSlots(mods) {
     const modHtml = occupied
       ? `
         <div class="slot-mod-card">
-          <img class="mod-art" src="${modImageUrl(mod)}" alt="Image du mod ${escapeHtml(mod)}" />
+          ${modImageTag(mod)}
           <p class="slot-mod">${escapeHtml(mod)}</p>
         </div>
       `
@@ -189,6 +256,7 @@ function renderBuild(build) {
   renderModPool(build);
   wireDragAndDrop();
   applyAdminMode();
+  hydrateModImages([...buildLibrary(build), ...currentMods]);
 }
 
 function applyAdminMode() {
@@ -310,13 +378,13 @@ saveButton.addEventListener("click", () => {
     return;
   }
 
-  const cleanedMods = currentMods.map((mod) => mod.trim()).filter(Boolean);
+  const preservedSlots = currentMods.map((mod) => mod.trim());
   const nextBuilds = loadBuilds().map((build) => {
     if (build.id !== currentBuildId) {
       return build;
     }
 
-    return { ...build, mods: cleanedMods };
+    return { ...build, mods: preservedSlots };
   });
 
   saveBuilds(nextBuilds);
