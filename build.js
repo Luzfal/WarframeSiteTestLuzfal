@@ -21,9 +21,37 @@ function renderNotFound() {
   `;
 }
 
+function buildModSlots(mods) {
+  const slotNames = [
+    "Aura",
+    "Exilus",
+    "Slot 1",
+    "Slot 2",
+    "Slot 3",
+    "Slot 4",
+    "Slot 5",
+    "Slot 6",
+    "Slot 7",
+    "Slot 8"
+  ];
+
+  return slotNames
+    .map((slotName, index) => {
+      const mod = mods[index];
+      const occupied = Boolean(mod);
+      return `
+        <article class="mod-slot ${occupied ? "is-filled" : ""}">
+          <p class="slot-title">${slotName}</p>
+          <p class="slot-mod">${occupied ? escapeHtml(mod) : "Emplacement vide"}</p>
+        </article>
+      `;
+    })
+    .join("");
+}
+
 function renderBuild(build) {
   const tagsHtml = (build.tags || []).map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join("");
-  const modsHtml = (build.mods || []).map((mod) => `<li>${escapeHtml(mod)}</li>`).join("");
+  const modSlotsHtml = buildModSlots(build.mods || []);
 
   detailContainer.innerHTML = `
     <h2>${escapeHtml(build.name)}</h2>
@@ -38,10 +66,8 @@ function renderBuild(build) {
     <h3>Tags</h3>
     <div class="tags">${tagsHtml || "<span class=\"tag-chip\">#sans-tag</span>"}</div>
 
-    <h3>Mods à installer</h3>
-    <ul class="mods-list">
-      ${modsHtml || "<li>Aucun mod renseigné.</li>"}
-    </ul>
+    <h3>Installation des mods (slots)</h3>
+    <div class="mods-grid">${modSlotsHtml}</div>
   `;
 }
 

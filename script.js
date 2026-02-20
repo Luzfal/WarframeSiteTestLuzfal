@@ -28,13 +28,7 @@ const defaultBuilds = [
     description:
       "Hunter Munitions, Vital Sense et faction mod pour burst les eximus.",
     tags: ["crit", "viral", "burst"],
-    mods: [
-      "Serration",
-      "Split Chamber",
-      "Vital Sense",
-      "Hunter Munitions",
-      "Malignant Force"
-    ],
+    mods: ["Serration", "Split Chamber", "Vital Sense", "Hunter Munitions", "Malignant Force"],
     likes: 16,
     favorite: false,
     createdAt: Date.now() - 3600 * 1000 * 24
@@ -140,7 +134,11 @@ function updateBuildById(buildId, updater) {
 
 function createBuildCard(build) {
   const card = document.createElement("article");
-  card.className = "card";
+  card.className = "card clickable-card";
+  card.dataset.href = `build.html?id=${encodeURIComponent(build.id)}`;
+  card.tabIndex = 0;
+  card.setAttribute("role", "link");
+  card.setAttribute("aria-label", `Ouvrir le build ${build.name}`);
 
   const tagsHtml = build.tags.map((tag) => `<span class="tag-chip">#${tag}</span>`).join("");
 
@@ -154,11 +152,10 @@ function createBuildCard(build) {
     <p>${build.description}</p>
     <div class="tags">${tagsHtml}</div>
     <div class="card-actions">
-      <button data-action="like" data-id="${build.id}">👍 ${build.likes}</button>
-      <button data-action="favorite" data-id="${build.id}" class="${build.favorite ? "is-on" : ""}">
+      <button type="button" data-action="like" data-id="${build.id}">👍 ${build.likes}</button>
+      <button type="button" data-action="favorite" data-id="${build.id}" class="${build.favorite ? "is-on" : ""}">
         ${build.favorite ? "★ Favori" : "☆ Favori"}
       </button>
-      <a class="details-link" href="build.html?id=${encodeURIComponent(build.id)}">Voir les mods</a>
     </div>
   `;
 
@@ -198,28 +195,61 @@ for (const tab of tabs) {
   tab.addEventListener("click", () => setActiveTab(tab.dataset.category));
 }
 
+function goToCardDetailFromTarget(target) {
+  const card = target.closest(".clickable-card");
+
+  if (!card || !card.dataset.href) {
+    return;
+  }
+
+  window.location.href = card.dataset.href;
+}
+
 list.addEventListener("click", (event) => {
   const target = event.target;
 
-  if (!(target instanceof HTMLButtonElement)) {
+  if (!(target instanceof HTMLElement)) {
     return;
   }
 
-  const action = target.dataset.action;
-  const buildId = target.dataset.id;
+  const button = target.closest("button[data-action]");
 
-  if (!action || !buildId) {
+  if (button instanceof HTMLButtonElement) {
+    const action = button.dataset.action;
+    const buildId = button.dataset.id;
+
+    if (!action || !buildId) {
+      return;
+    }
+
+    if (action === "like") {
+      updateBuildById(buildId, (build) => ({ ...build, likes: build.likes + 1 }));
+      return;
+    }
+
+    if (action === "favorite") {
+      updateBuildById(buildId, (build) => ({ ...build, favorite: !build.favorite }));
+    }
+
     return;
   }
 
-  if (action === "like") {
-    updateBuildById(buildId, (build) => ({ ...build, likes: build.likes + 1 }));
+  goToCardDetailFromTarget(target);
+});
+
+list.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") {
     return;
   }
 
-  if (action === "favorite") {
-    updateBuildById(buildId, (build) => ({ ...build, favorite: !build.favorite }));
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement) || !target.classList.contains("clickable-card")) {
+    return;
   }
+
+  event.preventDefault();
+  goToCardDetailFromTarget(target);
 });
 
 searchInput.addEventListener("input", renderBuilds);

@@ -167,15 +167,13 @@ body {
   flex-wrap: wrap;
 }
 
-.card-actions button,
-.details-link {
+.card-actions button {
   padding: 0.45rem 0.7rem;
   border-radius: 10px;
   border: 1px solid #33407a;
   background: #10152d;
   color: var(--text);
   font-weight: 600;
-  text-decoration: none;
 }
 
 .card-actions button.is-on {
@@ -184,23 +182,54 @@ body {
   color: #031421;
 }
 
-.details-link {
-  display: inline-flex;
-  align-items: center;
+.clickable-card {
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.clickable-card:hover,
+.clickable-card:focus-visible {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  outline: none;
 }
 
 .detail-layout {
   margin-bottom: 3rem;
 }
 
-.mods-list {
-  margin: 0;
-  padding-left: 1.1rem;
-  color: var(--muted);
+.mods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.7rem;
 }
 
-.mods-list li {
-  margin-bottom: 0.4rem;
+.mod-slot {
+  border: 1px dashed #4f5d97;
+  border-radius: 12px;
+  padding: 0.7rem;
+  min-height: 84px;
+  background: #131a36;
+}
+
+.mod-slot.is-filled {
+  border-style: solid;
+  border-color: var(--accent);
+  background: #162040;
+}
+
+.slot-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.slot-mod {
+  margin: 0;
+  color: var(--text);
+  font-weight: 600;
 }
 
 .form {
