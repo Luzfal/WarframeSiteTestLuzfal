@@ -66,6 +66,47 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function hashColor(name) {
+  let hash = 0;
+  for (const char of name) {
+    hash = (hash << 5) - hash + char.charCodeAt(0);
+    hash |= 0;
+  }
+
+  const hue = Math.abs(hash) % 360;
+  return {
+    bg1: `hsl(${hue} 85% 45%)`,
+    bg2: `hsl(${(hue + 48) % 360} 75% 30%)`
+  };
+}
+
+function modImageUrl(name) {
+  const clean = name.trim();
+  const short = clean
+    .split(" ")
+    .map((part) => part[0] || "")
+    .join("")
+    .slice(0, 3)
+    .toUpperCase();
+  const color = hashColor(clean || "MOD");
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="${color.bg1}"/>
+          <stop offset="100%" stop-color="${color.bg2}"/>
+        </linearGradient>
+      </defs>
+      <rect width="120" height="120" rx="16" fill="url(#g)"/>
+      <rect x="10" y="10" width="100" height="100" rx="12" fill="rgba(0,0,0,0.22)" stroke="rgba(255,255,255,0.32)"/>
+      <text x="60" y="68" text-anchor="middle" fill="white" font-size="28" font-weight="700" font-family="Segoe UI, Arial">${short || "MOD"}</text>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 function renderNotFound() {
   detailContainer.innerHTML = `
     <h2>Build introuvable</h2>
@@ -88,7 +129,11 @@ function renderModPool(build) {
     <div class="mod-pool-grid">
       ${mods
         .map(
-          (mod) => `<button type="button" class="pool-mod" draggable="true" data-mod="${escapeHtml(mod)}">${escapeHtml(mod)}</button>`
+          (mod) => `
+            <button type="button" class="pool-mod" draggable="true" data-mod="${escapeHtml(mod)}" title="${escapeHtml(mod)}">
+              <img class="mod-art" src="${modImageUrl(mod)}" alt="Image du mod ${escapeHtml(mod)}" />
+              <span class="pool-mod-name">${escapeHtml(mod)}</span>
+            </button>`
         )
         .join("")}
     </div>
@@ -99,10 +144,19 @@ function buildModSlots(mods) {
   return SLOT_DEFS.map((slot, index) => {
     const mod = mods[index] || "";
     const occupied = Boolean(mod);
+    const modHtml = occupied
+      ? `
+        <div class="slot-mod-card">
+          <img class="mod-art" src="${modImageUrl(mod)}" alt="Image du mod ${escapeHtml(mod)}" />
+          <p class="slot-mod">${escapeHtml(mod)}</p>
+        </div>
+      `
+      : '<p class="slot-mod">Emplacement vide</p>';
+
     return `
       <article class="mod-slot ${slot.className} ${occupied ? "is-filled" : ""}" data-slot-index="${index}">
         <p class="slot-title">${slot.label}</p>
-        <p class="slot-mod">${occupied ? escapeHtml(mod) : "Emplacement vide"}</p>
+        ${modHtml}
         ${occupied ? '<button type="button" class="slot-clear" data-action="clear-slot">Retirer</button>' : ""}
       </article>
     `;

@@ -323,10 +323,26 @@ body {
   letter-spacing: 0.05em;
 }
 
+.slot-mod-card {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.45rem;
+}
+
 .slot-mod {
-  margin: 0 0 0.5rem;
+  margin: 0;
   color: var(--text);
   font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.mod-art {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  border: 1px solid #4e5b95;
+  object-fit: cover;
+  background: #0d122a;
 }
 
 .slot-clear {
@@ -346,18 +362,27 @@ body {
 }
 
 .mod-pool-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.6rem;
 }
 
 .pool-mod {
   border: 1px solid #3f4f89;
   background: #111936;
   color: var(--text);
-  border-radius: 999px;
-  padding: 0.35rem 0.65rem;
+  border-radius: 12px;
+  padding: 0.5rem;
   cursor: grab;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.pool-mod-name {
+  font-size: 0.78rem;
+  line-height: 1.2;
 }
 
 .pool-mod:disabled {
