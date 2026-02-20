@@ -150,6 +150,21 @@ body {
   border: 1px solid #33407a;
 }
 
+.admin-actions button {
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #33407a;
+  background: #10152d;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-actions button.danger {
+  border-color: #ff6b81;
+  color: #ffd3dc;
+}
+
 .readonly-badge {
   font-size: 0.86rem;
   color: var(--muted);
@@ -236,7 +251,16 @@ body {
 }
 
 .detail-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1.4fr 1fr;
   margin-bottom: 3rem;
+}
+
+@media (max-width: 940px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .mods-grid {

@@ -12,8 +12,8 @@ Puis ouvrir <http://localhost:4173>.
 
 ## Pages
 
-- `index.html` : liste des builds, filtres, publication.
-- `build.html?id=<id>` : détail d'un build avec les mods à installer.
+- `index.html` : liste des builds, filtres et publication (sans édition des mods).
+- `build.html?id=<id>` : détail d'un build, édition des mods et suppression (admin).
 
 ## Rôles
 

@@ -16,6 +16,39 @@
 
     <main class="container detail-layout">
       <section id="build-detail" class="card"></section>
+
+      <section class="card">
+        <h2>Administration du build</h2>
+        <div class="admin-panel">
+          <p id="detail-admin-status" class="status-text">Mode lecture seule (utilisateur)</p>
+          <label>
+            Mot de passe admin
+            <input id="detail-admin-password" type="password" placeholder="Entrer le mot de passe admin" />
+          </label>
+          <div class="admin-actions">
+            <button id="detail-admin-login" type="button">Se connecter</button>
+            <button id="detail-admin-logout" type="button">Se déconnecter</button>
+          </div>
+        </div>
+
+        <p id="detail-readonly-message" class="readonly-message">
+          Connectez-vous en admin pour modifier les mods ou supprimer ce build.
+        </p>
+
+        <form id="detail-build-form" class="form">
+          <label>
+            Mods à installer (1 mod par ligne)
+            <textarea id="detail-mods" rows="8" required placeholder="Ex:
+Serration
+Split Chamber
+Vital Sense"></textarea>
+          </label>
+          <div class="admin-actions">
+            <button id="detail-save" type="submit">Enregistrer les mods</button>
+            <button id="detail-delete" type="button" class="danger">Supprimer le build</button>
+          </div>
+        </form>
+      </section>
     </main>
 
     <footer class="container footer">

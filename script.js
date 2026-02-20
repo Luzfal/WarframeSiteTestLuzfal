@@ -195,7 +195,6 @@ function fillFormForEdit(build) {
   document.getElementById("type").value = build.type;
   document.getElementById("content").value = build.content;
   document.getElementById("tags").value = build.tags.join(", ");
-  document.getElementById("mods").value = (build.mods || []).join("\n");
   document.getElementById("description").value = build.description;
   submitButton.textContent = "Enregistrer les modifications";
   cancelEditButton.style.display = "inline-block";
@@ -382,20 +381,13 @@ form.addEventListener("submit", (event) => {
     .map((tag) => normalize(tag))
     .filter(Boolean);
 
-  const mods = document
-    .getElementById("mods")
-    .value.split("\n")
-    .map((mod) => mod.trim())
-    .filter(Boolean);
-
   const buildDraft = {
     name: document.getElementById("name").value.trim(),
     author: document.getElementById("author").value.trim(),
     type: document.getElementById("type").value,
     content: document.getElementById("content").value,
     description: document.getElementById("description").value.trim(),
-    tags,
-    mods
+    tags
   };
 
   const builds = loadBuilds();
@@ -406,7 +398,7 @@ form.addEventListener("submit", (event) => {
         return build;
       }
 
-      return { ...build, ...buildDraft };
+      return { ...build, ...buildDraft, mods: build.mods || [] };
     });
 
     saveBuilds(nextBuilds);
@@ -414,6 +406,7 @@ form.addEventListener("submit", (event) => {
     const build = {
       id: crypto.randomUUID(),
       ...buildDraft,
+      mods: [],
       likes: 0,
       favorite: false,
       createdAt: Date.now()
