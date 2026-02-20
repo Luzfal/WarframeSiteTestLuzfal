@@ -51,7 +51,22 @@
       </section>
 
       <section>
-        <h2>Ajouter un build</h2>
+        <h2>Administration</h2>
+        <div class="admin-panel card">
+          <p id="admin-status" class="status-text">Mode lecture seule (utilisateur)</p>
+          <label>
+            Mot de passe admin
+            <input id="admin-password" type="password" placeholder="Entrer le mot de passe admin" />
+          </label>
+          <div class="admin-actions">
+            <button id="admin-login" type="button">Se connecter</button>
+            <button id="admin-logout" type="button">Se déconnecter</button>
+          </div>
+          <p class="hint">Démo locale: mot de passe <code>warframe-admin</code></p>
+        </div>
+
+        <h2>Ajouter / modifier un build</h2>
+        <p id="readonly-message" class="readonly-message">Vous êtes en mode utilisateur: publication et modification désactivées.</p>
         <form id="build-form" class="form">
           <label>
             Nom du build
@@ -92,7 +107,8 @@
             Description
             <textarea id="description" rows="4" required placeholder="Objectif, mods clés, arcanes..."></textarea>
           </label>
-          <button type="submit">Publier</button>
+          <button id="submit-build" type="submit">Publier</button>
+          <button id="cancel-edit" type="button" class="secondary">Annuler la modification</button>
         </form>
       </section>
     </main>

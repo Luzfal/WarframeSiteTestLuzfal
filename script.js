@@ -1,3 +1,6 @@
+const ADMIN_PASSWORD = "warframe-admin";
+const ADMIN_SESSION_KEY = "warframe-admin-session";
+
 const defaultBuilds = [
   {
     id: crypto.randomUUID(),
@@ -8,13 +11,7 @@ const defaultBuilds = [
     description:
       "Spore + Miasma orienté survie Steel Path avec adaptation et rolling guard.",
     tags: ["survie", "steelpath", "solo"],
-    mods: [
-      "Umbral Intensify",
-      "Transient Fortitude",
-      "Adaptation",
-      "Rolling Guard",
-      "Primed Continuity"
-    ],
+    mods: ["Umbral Intensify", "Transient Fortitude", "Adaptation", "Rolling Guard", "Primed Continuity"],
     likes: 21,
     favorite: false,
     createdAt: Date.now() - 3600 * 1000 * 48
@@ -54,8 +51,20 @@ const tabs = document.querySelectorAll(".tab");
 const searchInput = document.getElementById("search");
 const sortSelect = document.getElementById("sort");
 const favoritesOnlyInput = document.getElementById("favorites-only");
+const adminPasswordInput = document.getElementById("admin-password");
+const adminLoginButton = document.getElementById("admin-login");
+const adminLogoutButton = document.getElementById("admin-logout");
+const adminStatus = document.getElementById("admin-status");
+const readonlyMessage = document.getElementById("readonly-message");
+const submitButton = document.getElementById("submit-build");
+const cancelEditButton = document.getElementById("cancel-edit");
 
 let activeCategory = "Tous";
+let editingBuildId = null;
+
+function isAdmin() {
+  return localStorage.getItem(ADMIN_SESSION_KEY) === "true";
+}
 
 function loadBuilds() {
   const stored = localStorage.getItem("warframe-builds");
@@ -115,11 +124,42 @@ function visibleBuilds() {
     return haystack.includes(query);
   });
 
-  builds = sortBuilds(builds);
-  return builds;
+  return sortBuilds(builds);
+}
+
+function resetFormEditingState() {
+  editingBuildId = null;
+  submitButton.textContent = "Publier";
+  cancelEditButton.style.display = "none";
+}
+
+function applyAdminMode() {
+  const admin = isAdmin();
+  adminStatus.textContent = admin ? "Mode administrateur activé" : "Mode lecture seule (utilisateur)";
+  readonlyMessage.style.display = admin ? "none" : "block";
+  form.classList.toggle("is-disabled", !admin);
+
+  for (const field of form.querySelectorAll("input, select, textarea, button")) {
+    if (field.id === "cancel-edit") {
+      field.disabled = !admin;
+      continue;
+    }
+
+    field.disabled = !admin;
+  }
+
+  if (!admin) {
+    resetFormEditingState();
+  }
+
+  renderBuilds();
 }
 
 function updateBuildById(buildId, updater) {
+  if (!isAdmin()) {
+    return;
+  }
+
   const builds = loadBuilds().map((build) => {
     if (build.id !== buildId) {
       return build;
@@ -132,6 +172,36 @@ function updateBuildById(buildId, updater) {
   renderBuilds();
 }
 
+function deleteBuildById(buildId) {
+  if (!isAdmin()) {
+    return;
+  }
+
+  const builds = loadBuilds().filter((build) => build.id !== buildId);
+  saveBuilds(builds);
+
+  if (editingBuildId === buildId) {
+    form.reset();
+    resetFormEditingState();
+  }
+
+  renderBuilds();
+}
+
+function fillFormForEdit(build) {
+  editingBuildId = build.id;
+  document.getElementById("name").value = build.name;
+  document.getElementById("author").value = build.author;
+  document.getElementById("type").value = build.type;
+  document.getElementById("content").value = build.content;
+  document.getElementById("tags").value = build.tags.join(", ");
+  document.getElementById("mods").value = (build.mods || []).join("\n");
+  document.getElementById("description").value = build.description;
+  submitButton.textContent = "Enregistrer les modifications";
+  cancelEditButton.style.display = "inline-block";
+  window.scrollTo({ top: form.offsetTop - 40, behavior: "smooth" });
+}
+
 function createBuildCard(build) {
   const card = document.createElement("article");
   card.className = "card clickable-card";
@@ -142,21 +212,28 @@ function createBuildCard(build) {
 
   const tagsHtml = build.tags.map((tag) => `<span class="tag-chip">#${tag}</span>`).join("");
 
+  const adminActions = isAdmin()
+    ? `
+      <button type="button" data-action="like" data-id="${build.id}">👍 ${build.likes}</button>
+      <button type="button" data-action="favorite" data-id="${build.id}" class="${build.favorite ? "is-on" : ""}">
+        ${build.favorite ? "★ Favori" : "☆ Favori"}
+      </button>
+      <button type="button" data-action="edit" data-id="${build.id}">Modifier</button>
+      <button type="button" data-action="delete" data-id="${build.id}">Supprimer</button>
+    `
+    : `<span class="readonly-badge">Lecture seule</span>`;
+
   card.innerHTML = `
     <h3>${build.name}</h3>
     <div class="meta-row">
       <span class="badge">${build.type}</span>
       <span class="badge">${build.content}</span>
       <span class="badge">par ${build.author}</span>
+      <span class="badge">👍 ${build.likes}</span>
     </div>
     <p>${build.description}</p>
     <div class="tags">${tagsHtml}</div>
-    <div class="card-actions">
-      <button type="button" data-action="like" data-id="${build.id}">👍 ${build.likes}</button>
-      <button type="button" data-action="favorite" data-id="${build.id}" class="${build.favorite ? "is-on" : ""}">
-        ${build.favorite ? "★ Favori" : "☆ Favori"}
-      </button>
-    </div>
+    <div class="card-actions">${adminActions}</div>
   `;
 
   return card;
@@ -218,7 +295,7 @@ list.addEventListener("click", (event) => {
     const action = button.dataset.action;
     const buildId = button.dataset.id;
 
-    if (!action || !buildId) {
+    if (!action || !buildId || !isAdmin()) {
       return;
     }
 
@@ -229,6 +306,19 @@ list.addEventListener("click", (event) => {
 
     if (action === "favorite") {
       updateBuildById(buildId, (build) => ({ ...build, favorite: !build.favorite }));
+      return;
+    }
+
+    if (action === "edit") {
+      const build = loadBuilds().find((item) => item.id === buildId);
+      if (build) {
+        fillFormForEdit(build);
+      }
+      return;
+    }
+
+    if (action === "delete") {
+      deleteBuildById(buildId);
     }
 
     return;
@@ -256,8 +346,35 @@ searchInput.addEventListener("input", renderBuilds);
 sortSelect.addEventListener("change", renderBuilds);
 favoritesOnlyInput.addEventListener("change", renderBuilds);
 
+adminLoginButton.addEventListener("click", () => {
+  const password = adminPasswordInput.value;
+
+  if (password !== ADMIN_PASSWORD) {
+    adminStatus.textContent = "Mot de passe admin invalide";
+    return;
+  }
+
+  localStorage.setItem(ADMIN_SESSION_KEY, "true");
+  adminPasswordInput.value = "";
+  applyAdminMode();
+});
+
+adminLogoutButton.addEventListener("click", () => {
+  localStorage.removeItem(ADMIN_SESSION_KEY);
+  applyAdminMode();
+});
+
+cancelEditButton.addEventListener("click", () => {
+  form.reset();
+  resetFormEditingState();
+});
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
+
+  if (!isAdmin()) {
+    return;
+  }
 
   const tags = document
     .getElementById("tags")
@@ -271,30 +388,49 @@ form.addEventListener("submit", (event) => {
     .map((mod) => mod.trim())
     .filter(Boolean);
 
-  const build = {
-    id: crypto.randomUUID(),
+  const buildDraft = {
     name: document.getElementById("name").value.trim(),
     author: document.getElementById("author").value.trim(),
     type: document.getElementById("type").value,
     content: document.getElementById("content").value,
     description: document.getElementById("description").value.trim(),
     tags,
-    mods,
-    likes: 0,
-    favorite: false,
-    createdAt: Date.now()
+    mods
   };
 
-  const builds = [build, ...loadBuilds()];
-  saveBuilds(builds);
-  form.reset();
+  const builds = loadBuilds();
 
-  if (activeCategory !== "Tous" && activeCategory !== build.type) {
-    setActiveTab(build.type);
+  if (editingBuildId) {
+    const nextBuilds = builds.map((build) => {
+      if (build.id !== editingBuildId) {
+        return build;
+      }
+
+      return { ...build, ...buildDraft };
+    });
+
+    saveBuilds(nextBuilds);
+  } else {
+    const build = {
+      id: crypto.randomUUID(),
+      ...buildDraft,
+      likes: 0,
+      favorite: false,
+      createdAt: Date.now()
+    };
+    saveBuilds([build, ...builds]);
+  }
+
+  form.reset();
+  resetFormEditingState();
+
+  if (activeCategory !== "Tous" && activeCategory !== buildDraft.type) {
+    setActiveTab(buildDraft.type);
     return;
   }
 
   renderBuilds();
 });
 
-renderBuilds();
+resetFormEditingState();
+applyAdminMode();

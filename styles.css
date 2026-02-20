@@ -114,6 +114,47 @@ body {
 }
 
 .card,
+
+.admin-panel {
+  margin-bottom: 1rem;
+}
+
+.status-text {
+  margin-top: 0;
+  font-weight: 700;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}
+
+.readonly-message {
+  color: #ffd089;
+}
+
+.form.is-disabled {
+  opacity: 0.55;
+}
+
+.secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid #33407a;
+}
+
+.readonly-badge {
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
 .form {
   background: color-mix(in oklab, var(--panel) 90%, black);
   border: 1px solid #2d3560;
